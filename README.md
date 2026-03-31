@@ -68,7 +68,7 @@ Expected comparison result:
 
 ### 1) Start the Go sidecar
 
-From the repo root (`acf-demo`):
+From the repo root:
 
 go run sidecar/main.go
 
@@ -82,8 +82,9 @@ Then run:
 
 python sdk/test_firewall.py
 
-## Example output
+### Example output
 
+```text
 INPUT: Hello, how are you?
 DECISION: ALLOW
 SCORE: 0
@@ -113,3 +114,4 @@ ITERATIVE DECISION: SANITIZE
 ITERATIVE SCORE: 0.4
 ITERATIVE SIGNALS: ['ignore previous instructions']
 --------------------------------------------------
+```

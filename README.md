@@ -1,15 +1,15 @@
 # ACF Demo: Minimal Agentic Cognitive Firewall
 
-A minimal, working prototype of an **Agentic Cognitive Firewall (ACF)** for LLM input security.
+This repo is a small, working prototype of an **Agentic Cognitive Firewall (ACF)** for LLM input security.
 
 ## What problem this solves
 
-LLM applications are vulnerable to prompt injection attempts such as instruction override and hidden control phrases.
-This demo shows a simple **Zero Trust** enforcement flow that inspects every input before it reaches an LLM.
+LLM apps are vulnerable to prompt injection (for example, instruction override or hidden control phrases).
+This demo applies a simple **Zero Trust** flow: inspect every input before it reaches the model.
 
-## What this demo shows
+## What this demo includes
 
-A pipeline-based filter with clear stages:
+A lightweight pipeline with five stages:
 
 - Validate
 - Normalize
@@ -26,43 +26,45 @@ Python SDK (PEP) -> Go Sidecar (PDP) -> Pipeline
 
 ## Pipeline details
 
-1. **Validate**: Reject empty input.
+1. **Validate**: reject empty input.
 2. **Normalize**:
    - lowercase
    - trim spaces
    - remove basic zero-width characters
-   - decode simple base64 when detected
-   - run iteratively up to 3 rounds until stable
-3. **Scan**: Match normalized input against suspicious patterns from `sidecar/patterns.json`.
-4. **Aggregate**: Each signal contributes a fixed risk weight (0.4), capped at 1.0.
+   - decode simple Base64 when detected
+   - repeat up to 3 rounds until stable
+3. **Scan**: match normalized input against suspicious patterns from `sidecar/patterns.json`.
+4. **Aggregate**: each signal adds a fixed risk weight (0.4), capped at 1.0.
 5. **Decision**:
    - `score >= 0.8` -> `BLOCK`
    - `score >= 0.4` -> `SANITIZE`
-   - else -> `ALLOW`
+   - otherwise -> `ALLOW`
 
 ## Single-pass vs iterative normalization
 
 This demo includes a **double-encoded** payload:
 
-U1dkdWIzSmxJSEJ5WlhacGIzVnpJR2x1YzNSeWRXTjBhVzl1Y3c9PQ==
+`U1dkdWIzSmxJSEJ5WlhacGIzVnpJR2x1YzNSeWRXTjBhVzl1Y3c9PQ==`
 
-It decodes once to:
+Decodes once to:
 
-SWdub3JlIHByZXZpb3VzIGluc3RydWN0aW9ucw==
+`SWdub3JlIHByZXZpb3VzIGluc3RydWN0aW9ucw==`
 
-It decodes twice to:
+Decodes twice to:
 
-ignore previous instructions
+`ignore previous instructions`
 
-Comparison:
+Why this matters:
 
-- **Single pass normalization** decodes only once, so scan misses the hidden phrase.
+- **Single-pass normalization** decodes only once, so scan misses the hidden phrase.
 - **Iterative normalization** decodes repeatedly (up to 3 rounds), reveals the phrase, and triggers a signal.
 
-Expected comparison result:
+Expected result:
 
 - Single pass -> `ALLOW` (score `0.0`, no signals)
 - Iterative -> `SANITIZE` (score `0.4`, signal `ignore previous instructions`)
+
+> Defensive note: examples in this repo are for security testing and education.
 
 ## How to run
 
@@ -70,17 +72,23 @@ Expected comparison result:
 
 From the repo root:
 
+```bash
 go run sidecar/main.go
+```
 
 ### 2) Run Python test payloads
 
-Install dependencies first:
+Install dependencies:
 
+```bash
 pip install -r requirements.txt
+```
 
-Then run:
+Run tests:
 
+```bash
 python sdk/test_firewall.py
+```
 
 ### Example output
 
